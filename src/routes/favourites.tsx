@@ -1,0 +1,8 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { Heart, Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { TrackList } from '@/components/track-list';
+import { useMusic } from '@/components/music-provider';
+
+export const Route = createFileRoute('/favourites')({ head: () => ({ meta: [{ title: 'Favourites — Melo' }, { name: 'description', content: 'The songs you love, all together in Melo.' }, { property: 'og:title', content: 'Favourites — Melo' }, { property: 'og:description', content: 'Return to your favourite songs and moments.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }), component: Favourites });
+function Favourites() { const m = useMusic(); const tracks = m.tracks.filter(t => m.likes.includes(t.id)); return <div className="collection-page"><div className="collection-title"><div><span className="eyebrow">BACK TO A GOOD FEELING</span><h1>Favourites.</h1><p>{tracks.length} {tracks.length === 1 ? 'song' : 'songs'} close to your heart.</p></div><Button variant="player" size="icon" aria-label="Play favourites" disabled={!tracks.length} onClick={() => { if (tracks[0]) m.select(tracks[0].id); }}><Play fill="currentColor" /></Button></div><TrackList tracks={tracks} />{!tracks.length && <div className="empty-state"><Heart size={36} /><h2>A little room for your favourites.</h2><p>No favourite songs yet.</p></div>}</div>; }
