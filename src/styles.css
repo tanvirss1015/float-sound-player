@@ -24,7 +24,9 @@
  --border: oklch(.34 .011 240 / .52); --destructive: oklch(.69 .19 22);
  --shadow-float: 6px 6px 13px oklch(.14 .009 240 / .6), -3px -3px 9px oklch(.36 .01 240 / .18);
  --shadow-record: 15px 22px 35px oklch(.12 .008 240 / .65), -7px -7px 25px oklch(.35 .01 240 / .14);
- --record: oklch(.23 .008 240); --groove: oklch(.37 .008 240 / .25);
+ --record: oklch(.23 .008 240); --groove: oklch(.42 .008 240 / .22);
+ --record-highlight: oklch(.65 .008 240 / .055);
+ --record-rim: oklch(.52 .008 240 / .18);
  --backdrop: oklch(.1 .005 240 / .65); --art-tag: oklch(.16 .008 240 / .8);
 }
 :root[data-theme='light'] {
@@ -91,14 +93,14 @@
 .player-top button { color:var(--muted-foreground); }
 .album-label { display:flex; justify-content:center; align-items:center; gap:7px; color:var(--muted-foreground); font-size:11px; margin-top:26px; }
 .record-wrap { display:flex; justify-content:center; margin:44px auto 37px; }
-.vinyl { flex:none; width:278px; aspect-ratio:1; border-radius:50%; background:repeating-radial-gradient(circle at center,var(--record) 0px,var(--record) 1px,var(--groove) 1.3px,var(--record) 2px); border:1px solid var(--border); box-shadow:var(--shadow-record); position:relative; display:flex; align-items:center; justify-content:center; }
-.vinyl::before { content:''; border:1px solid var(--border); position:absolute; inset:18px; border-radius:50%; }
-.vinyl img { width:43%; height:43%; border-radius:50%; object-fit:cover; }
+.vinyl { flex:none; width:278px; aspect-ratio:1; border-radius:50%; background:radial-gradient(ellipse at 28% 20%,var(--record-highlight),transparent 65%),var(--record); border:1px solid var(--record-rim); box-shadow:var(--shadow-record); position:relative; display:flex; align-items:center; justify-content:center; }
+.vinyl::before { content:''; position:absolute; inset:0; border-radius:50%; background:var(--groove); mask:url('/vinyl-grooves.svg') center / 100% 100% no-repeat; pointer-events:none; }
+.vinyl img { width:43%; height:43%; border-radius:50%; object-fit:cover; position:relative; }
 .spindle { width:7px; height:7px; position:absolute; border-radius:50%; background:var(--record); box-shadow:0 0 0 2px var(--groove); }
 .spinning { animation:spin 18s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .vinyl-small { width:52px; }
-.vinyl-small::before { inset:4px; }
+.vinyl-small::before { inset:0; }
 .vinyl-small .spindle { width:3px; height:3px; }
 .song-heading { text-align:center; }
 .song-heading h1 { font-size:28px; font-weight:650; line-height:1.3; overflow-wrap:anywhere; }
