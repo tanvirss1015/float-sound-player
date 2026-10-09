@@ -9,6 +9,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        float: "bg-secondary text-foreground shadow-float hover:bg-accent rounded-full",
+        player: "bg-primary text-primary-foreground shadow-float hover:bg-primary/90 rounded-full",
         default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
