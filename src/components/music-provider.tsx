@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { initialTracks, loadLocalTracks, saveLocalTrack, type Track } from '@/lib/music';
+import { defaultTrack, initialTracks, loadLocalTracks, saveLocalTrack, type Track } from '@/lib/music';
 
 function useMusicState() {
   const [tracks, setTracks] = useState(initialTracks);
@@ -15,12 +15,12 @@ function useMusicState() {
   const [speed, setSpeed] = useState(1);
   const [error, setError] = useState('');
   const audio = useRef<HTMLAudioElement>(null);
-  const current = tracks.find(t => t.id === currentId) ?? initialTracks[0];
+  const current = tracks.find(t => t.id === currentId) ?? defaultTrack;
   useEffect(() => {
     loadLocalTracks().then(saved => setTracks([...initialTracks, ...saved])).catch(() => {});
     try { const saved = localStorage.getItem('melo-likes'); if (saved) setLikes(JSON.parse(saved)); setLight(localStorage.getItem('melo-theme') === 'light'); } catch {}
   }, []);
-  useEffect(() => { document.documentElement.dataset.theme = light ? 'light' : 'dark'; localStorage.setItem('melo-theme', light ? 'light' : 'dark'); }, [light]);
+  useEffect(() => { document.documentElement.dataset['theme'] = light ? 'light' : 'dark'; localStorage.setItem('melo-theme', light ? 'light' : 'dark'); }, [light]);
   useEffect(() => { localStorage.setItem('melo-likes', JSON.stringify(likes)); }, [likes]);
   useEffect(() => { if (audio.current) { audio.current.volume = volume / 100; audio.current.playbackRate = speed; } }, [volume, speed]);
   useEffect(() => {
@@ -53,7 +53,7 @@ function useMusicState() {
     if (!files) return;
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('audio/') && !/\.(mp3|wav|ogg|m4a|flac|aac)$/i.test(file.name)) { setError('Please choose an audio file.'); continue; }
-      const track: Track = { id: crypto.randomUUID(), title: file.name.replace(/\.[^.]+$/, ''), artist: 'Your music', album: 'Your uploads', artwork: initialTracks[0].artwork, src: URL.createObjectURL(file), duration: 0, imported: true };
+      const track: Track = { id: crypto.randomUUID(), title: file.name.replace(/\.[^.]+$/, ''), artist: 'Your music', album: 'Your uploads', artwork: defaultTrack.artwork, src: URL.createObjectURL(file), duration: 0, imported: true };
       setTracks(prev => [...prev, track]);
       try { await saveLocalTrack(track, file); } catch { setError('Music is available this session, but could not be saved on this device.'); }
     }

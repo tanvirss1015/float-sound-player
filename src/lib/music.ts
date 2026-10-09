@@ -6,8 +6,9 @@ import morningAudio from '@/assets/weightless.mp3.asset.json';
 import nightAudio from '@/assets/afterglow.mp3.asset.json';
 
 export type Track = { id: string; title: string; artist: string; album: string; artwork: string; src: string; duration: number; imported?: boolean };
+export const defaultTrack: Track = { id: 'quiet', title: 'Quiet Hours', artist: 'Melo Sessions', album: 'A little stillness', artwork: quietArt, src: quietAudio.url, duration: 30 };
 export const initialTracks: Track[] = [
-  { id: 'quiet', title: 'Quiet Hours', artist: 'Melo Sessions', album: 'A little stillness', artwork: quietArt, src: quietAudio.url, duration: 30 },
+  defaultTrack,
   { id: 'weightless', title: 'Weightless', artist: 'Melo Sessions', album: 'Slow mornings', artwork: morningArt, src: morningAudio.url, duration: 30 },
   { id: 'afterglow', title: 'Afterglow', artist: 'Melo Sessions', album: 'After hours', artwork: nightArt, src: nightAudio.url, duration: 30 },
 ];
