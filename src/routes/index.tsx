@@ -6,7 +6,7 @@ import { useMusic } from '@/components/music-provider';
 import { playlists } from '@/lib/music';
 
 export const Route = createFileRoute('/')({
-  head: () => ({ meta: [{ title: 'NocTune — Your music, your moment' }, { name: 'description', content: 'A little stillness. Listen to your music with NocTune, your personal audio player.' }, { property: 'og:title', content: 'NocTune — Your music, your moment' }, { property: 'og:description', content: 'Your personal audio player. A little more you, a little more music.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
+  head: () => ({ meta: [{ title: 'Melo — Your music, your moment' }, { name: 'description', content: 'A little stillness. Listen to your music with Melo, your personal audio player.' }, { property: 'og:title', content: 'Melo — Your music, your moment' }, { property: 'og:description', content: 'Your personal audio player. A little more you, a little more music.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }),
   component: Index,
 });
 function Index() {

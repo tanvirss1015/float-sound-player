@@ -6,7 +6,7 @@ import { useMusic } from '@/components/music-provider';
 import { TrackList } from '@/components/track-list';
 import { playlists } from '@/lib/music';
 
-export const Route = createFileRoute('/library')({ head: () => ({ meta: [{ title: 'Your library — NocTune' }, { name: 'description', content: 'Your playlists and personal music collection in NocTune.' }, { property: 'og:title', content: 'Your library — NocTune' }, { property: 'og:description', content: 'Your favourite moments, collected in music.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }), component: Library });
+export const Route = createFileRoute('/library')({ head: () => ({ meta: [{ title: 'Your library — Melo' }, { name: 'description', content: 'Your playlists and personal music collection in Melo.' }, { property: 'og:title', content: 'Your library — Melo' }, { property: 'og:description', content: 'Your favourite moments, collected in music.' }, { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' }] }), component: Library });
 function Library() {
   const m = useMusic();
   const [query, setQuery] = useState('');

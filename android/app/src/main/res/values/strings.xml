@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">NocTune</string>
-    <string name="title_activity_main">NocTune</string>
+    <string name="app_name">Melo</string>
+    <string name="title_activity_main">Melo</string>
     <string name="package_name">app.melo.player</string>
     <string name="custom_url_scheme">app.melo.player</string>
 </resources>

@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { defaultTrack, initialTracks, loadLocalTracks, saveLocalTrack, type Track } from '@/lib/music';
-import { createEqualizer, equalizerPresets } from '@/lib/equalizer';
 
 function useMusicState() {
   const [tracks, setTracks] = useState(initialTracks);
@@ -15,9 +14,6 @@ function useMusicState() {
   const [repeat, setRepeat] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [error, setError] = useState('');
-  const [eqEnabled, setEqEnabled] = useState(false);
-  const [eqGains, setEqGains] = useState(equalizerPresets['Flat'] ?? [0, 0, 0, 0, 0]);
-  const eq = useRef<ReturnType<typeof createEqualizer> | null>(null);
   const audio = useRef<HTMLAudioElement>(null);
   const current = tracks.find(t => t.id === currentId) ?? defaultTrack;
   useEffect(() => {
@@ -27,17 +23,6 @@ function useMusicState() {
   useEffect(() => { document.documentElement.dataset['theme'] = light ? 'light' : 'dark'; localStorage.setItem('melo-theme', light ? 'light' : 'dark'); }, [light]);
   useEffect(() => { localStorage.setItem('melo-likes', JSON.stringify(likes)); }, [likes]);
   useEffect(() => { if (audio.current) { audio.current.volume = volume / 100; audio.current.playbackRate = speed; } }, [volume, speed]);
-  useEffect(() => { eq.current?.update(eqEnabled, eqGains); }, [eqEnabled, eqGains]);
-  function resumeEqualizer() { eq.current?.resume().catch(() => setError('Tap play to resume audio.')); }
-  function enableEqualizer(enabled: boolean) {
-    if (enabled && !eq.current && audio.current) {
-      try { eq.current = createEqualizer(audio.current); }
-      catch { setError('Equalizer is not supported on this device.'); return; }
-    }
-    resumeEqualizer();
-    eq.current?.update(enabled, eqGains);
-    setEqEnabled(enabled);
-  }
   useEffect(() => {
     if (!audio.current) return;
     setTime(0); setDuration(current.duration); setError('');
@@ -46,18 +31,17 @@ function useMusicState() {
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
     navigator.mediaSession.metadata = new MediaMetadata({ title: current.title, artist: current.artist, album: current.album, artwork: [{ src: current.artwork, sizes: '1024x1024', type: 'image/jpeg' }] });
-    navigator.mediaSession.setActionHandler('play', () => { resumeEqualizer(); audio.current?.play().then(() => setPlaying(true)).catch(() => setError('This track could not be played.')); });
+    navigator.mediaSession.setActionHandler('play', () => { audio.current?.play().then(() => setPlaying(true)).catch(() => setError('This track could not be played.')); });
     navigator.mediaSession.setActionHandler('pause', () => { audio.current?.pause(); setPlaying(false); });
     navigator.mediaSession.setActionHandler('nexttrack', () => next(1));
     navigator.mediaSession.setActionHandler('previoustrack', () => next(-1));
   }, [current, tracks, shuffle]);
   function togglePlay() {
     if (!audio.current) return;
-    resumeEqualizer();
     if (playing) { audio.current.pause(); setPlaying(false); }
     else audio.current.play().then(() => { setPlaying(true); setError(''); }).catch(() => setError('Unable to play this file. Try importing another audio file.'));
   }
-  function select(id: string) { resumeEqualizer(); if (id === currentId) { if (!playing) togglePlay(); } else { setCurrentId(id); setPlaying(true); } }
+  function select(id: string) { if (id === currentId) { if (!playing) togglePlay(); } else { setCurrentId(id); setPlaying(true); } }
   function next(direction: number) {
     const index = tracks.findIndex(t => t.id === currentId);
     const target = shuffle ? tracks.filter(t => t.id !== currentId)[Math.floor(Math.random() * Math.max(1, tracks.length - 1))] : tracks[(index + direction + tracks.length) % tracks.length];
@@ -74,12 +58,12 @@ function useMusicState() {
       try { await saveLocalTrack(track, file); } catch { setError('Music is available this session, but could not be saved on this device.'); }
     }
   }
-  return { tracks, current, playing, time, duration, volume, likes, light, shuffle, repeat, speed, error, audio, eqEnabled, eqGains, enableEqualizer, setEqGains, togglePlay, select, next, seek, like, importFiles, setVolume, setLight, setShuffle, setRepeat, setSpeed, setPlaying, setTime, setDuration };
+  return { tracks, current, playing, time, duration, volume, likes, light, shuffle, repeat, speed, error, audio, togglePlay, select, next, seek, like, importFiles, setVolume, setLight, setShuffle, setRepeat, setSpeed, setPlaying, setTime, setDuration };
 }
 type MusicState = ReturnType<typeof useMusicState>;
 const MusicContext = createContext<MusicState | null>(null);
 export function MusicProvider({ children }: { children: ReactNode }) {
   const state = useMusicState();
-  return <MusicContext.Provider value={state}>{children}<audio ref={state.audio} crossOrigin="anonymous" src={state.current.src} preload="metadata" loop={state.repeat} onTimeUpdate={e => state.setTime(e.currentTarget.currentTime)} onLoadedMetadata={e => state.setDuration(Number.isFinite(e.currentTarget.duration) ? e.currentTarget.duration : 0)} onEnded={() => state.next(1)} onPlay={() => state.setPlaying(true)} onPause={() => state.setPlaying(false)} /></MusicContext.Provider>;
+  return <MusicContext.Provider value={state}>{children}<audio ref={state.audio} src={state.current.src} preload="metadata" loop={state.repeat} onTimeUpdate={e => state.setTime(e.currentTarget.currentTime)} onLoadedMetadata={e => state.setDuration(Number.isFinite(e.currentTarget.duration) ? e.currentTarget.duration : 0)} onEnded={() => state.next(1)} onPlay={() => state.setPlaying(true)} onPause={() => state.setPlaying(false)} /></MusicContext.Provider>;
 }
 export function useMusic() { const value = useContext(MusicContext); if (!value) throw new Error('MusicProvider is required'); return value; }
