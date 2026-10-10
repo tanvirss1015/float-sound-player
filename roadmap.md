@@ -3,9 +3,10 @@
 - [x] Implement audio import and playback controls, with floating light mode.
 - [x] Prepare Capacitor Android project and build instructions.
 - [x] Check playback, search, favourites, persisted imports, menu and phone layout.
-- [ ] Compile an installable NocTune APK; verify Android toolchain availability.
-- [ ] Center the five-second skip icons and labels.
-- [ ] Strengthen light-mode disk and control shadows.
-- [ ] Implement a working audio equalizer.
-- [ ] Rename the player and Android app to NocTune.
-- [ ] Verify player controls, equalizer, themes and Android-sized layout.
+- [x] Compile an installable NocTune debug APK with offline bundled music.
+- [x] Center the five-second skip icons and labels.
+- [x] Strengthen light-mode disk and control shadows.
+- [x] Implement a working five-band audio equalizer.
+- [x] Rename the player and Android app to NocTune.
+- [x] Verify player controls, equalizer, themes and Android-sized layout.
+- [ ] Verify installation and native behavior on a physical Android device — requires an Android device outside this sandbox.
