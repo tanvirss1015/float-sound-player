@@ -13,3 +13,6 @@
 - Store imported device audio in IndexedDB, not Cloud, because the player manages private local files rather than shared server data.
 - Keep all player appearance tokens and responsive layouts in src/styles.css to preserve the reference design across themes.
 - Use Capacitor for the separate Android package; the Lovable web deployment remains TanStack Start and is not itself an APK.
+- Build the Android-only static shell with capacitor.vite.config.ts using the shared TanStack Router tree; bundle hosted sample audio at its existing paths for offline playback without changing the web asset pointers.
+- Keep one lazy Web Audio equalizer graph on MusicProvider's audio element so frequency adjustments continue across navigation without reconnecting the source.
+- Preserve existing local storage and Android application identifiers during display-name changes so installed users retain their imported music and preferences.
