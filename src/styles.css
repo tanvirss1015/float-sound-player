@@ -37,6 +37,7 @@
  --shadow-float: 7px 9px 17px oklch(.60 .02 245 / .32), 2px 3px 6px oklch(.60 .02 245 / .16), -5px -5px 12px oklch(1 0 0 / .95);
  --shadow-record: 0 18px 30px oklch(.40 .018 245 / .32), 8px 9px 15px oklch(.48 .018 245 / .25), -5px -5px 15px oklch(1 0 0 / .85);
 }
+@utility shadow-float { box-shadow:var(--shadow-float); }
 @layer base {
  * { border-color: var(--border); box-sizing: border-box; }
  body { margin:0; background:var(--background); color:var(--foreground); font-family:var(--font-sans); font-size:14px; letter-spacing:0; }
