@@ -1,4 +1,4 @@
-# Melo for Android
+# NocTune for Android
 
 The player UI and a Capacitor Android project are included. An APK has **not** been compiled in the Lovable sandbox, which has no JDK or Android SDK.
 

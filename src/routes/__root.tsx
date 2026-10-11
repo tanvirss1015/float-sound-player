@@ -80,7 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Melo — Your music, your moment" },
+      { title: "NocTune — Your music, your moment" },
       { name: "description", content: "Your personal music player." },
       { name: "theme-color", content: "#23272a" },
       { property: "og:type", content: "website" },
