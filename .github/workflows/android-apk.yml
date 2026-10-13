@@ -7,8 +7,6 @@ permissions:
   contents: read
 jobs:
   apk:
-    # Pinned: ubuntu-latest moves to a new Ubuntu release on 2026-10-19, which would
-    # change the preinstalled Android SDK under this job.
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -19,56 +17,23 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Use the runner's Android SDK
+      - name: Prepare Android SDK
         run: |
-          set -uo pipefail
-          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          if [ ! -d "$SDK_ROOT" ]; then
-            echo "No Android SDK found at $SDK_ROOT" >&2
-            exit 1
-          fi
-          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
-
-          SDKMANAGER=""
-          for candidate in "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "$SDK_ROOT/cmdline-tools"/*/bin/sdkmanager; do
-            if [ -x "$candidate" ]; then SDKMANAGER="$candidate"; break; fi
-          done
-          if [ -z "$SDKMANAGER" ]; then
-            echo "sdkmanager is missing from $SDK_ROOT. Contents:" >&2
-            ls -1 "$SDK_ROOT" >&2
-            exit 1
-          fi
-          echo "Using sdkmanager: $SDKMANAGER"
-
-          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
-
-          installed=0
-          for attempt in 1 2 3; do
-            if "$SDKMANAGER" --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"; then
-              installed=1
-              break
-            fi
-            echo "sdkmanager attempt $attempt failed; retrying in 15s" >&2
-            sleep 15
-          done
-          if [ "$installed" -ne 1 ]; then
-            echo "Could not install the Android SDK packages after 3 attempts." >&2
-            exit 1
-          fi
-          ls -1 "$SDK_ROOT/platforms" "$SDK_ROOT/build-tools"
+          SDK="$ANDROID_HOME"
+          MGR="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$MGR" --licenses >/dev/null 2>&1 || true
+          "$MGR" --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
       - name: Install dependencies
         run: bun install
-      - name: Build and bundle offline player
-        run: |
-          bun run build
-          node scripts/prepare-android.mjs
-          bunx cap sync android
+      - name: Build web app
+        run: bun run build
+      - name: Bundle offline audio
+        run: node scripts/prepare-android.mjs
+      - name: Sync Android project
+        run: bunx cap sync android
       - name: Compile installable APK
         working-directory: android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+        run: chmod +x gradlew && ./gradlew assembleDebug --no-daemon --stacktrace
       - name: Upload NocTune APK
         uses: actions/upload-artifact@v4
         with:
