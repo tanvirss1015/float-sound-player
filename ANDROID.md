@@ -5,9 +5,13 @@ The NocTune player and Capacitor Android project are included. An APK has **not*
 ## Get an APK without installing Android Studio
 
 1. Export/sync this project to your GitHub repository, including the `.github/workflows/android-apk.yml` workflow.
-2. In GitHub, open **Actions → Build NocTune APK → Run workflow**.
-3. When the job succeeds, download **NocTune-Android-APK** from the run's artifacts and extract `app-debug.apk`.
-4. Transfer the APK to your Android phone and allow installation from that source.
+2. In GitHub, open **Actions → Build NocTune APK → Run workflow**. The workflow also runs on every push to `main`.
+3. When the job succeeds, open the run, scroll to **Artifacts**, and download **NocTune-Android-APK**. Unzip it to get `app-debug.apk`.
+4. Copy `app-debug.apk` to the phone (USB, Google Drive, or a messaging app) and open it there.
+5. Android blocks apps from outside the Play Store: when prompted, tap **Settings → Allow from this source** (or **More details → Install anyway**), then go back and tap **Install**.
+6. After installing, open **NocTune** from the app drawer. The three sample tracks play offline; your own imported audio is saved on the device.
+
+If a later build fails, open the failed run and click the red step to read the error, then fix that step.
 
 The workflow installs the Android tools, builds NocTune, bundles its three sample tracks for offline use, and compiles a debug-signed APK. It has not been run from this sandbox; a successful GitHub run is required before an APK exists. For public distribution, use a privately signed release instead of the debug package.
 

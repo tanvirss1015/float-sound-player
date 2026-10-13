@@ -7,7 +7,9 @@ permissions:
   contents: read
 jobs:
   apk:
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moves to a new Ubuntu release on 2026-10-19, which would
+    # change the preinstalled Android SDK under this job.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -17,11 +19,46 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: android-actions/setup-android@v3
-      - name: Install Android build tools
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Use the runner's Android SDK
+        run: |
+          set -uo pipefail
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          if [ ! -d "$SDK_ROOT" ]; then
+            echo "No Android SDK found at $SDK_ROOT" >&2
+            exit 1
+          fi
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+
+          SDKMANAGER=""
+          for candidate in "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" "$SDK_ROOT/cmdline-tools"/*/bin/sdkmanager; do
+            if [ -x "$candidate" ]; then SDKMANAGER="$candidate"; break; fi
+          done
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager is missing from $SDK_ROOT. Contents:" >&2
+            ls -1 "$SDK_ROOT" >&2
+            exit 1
+          fi
+          echo "Using sdkmanager: $SDKMANAGER"
+
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+
+          installed=0
+          for attempt in 1 2 3; do
+            if "$SDKMANAGER" --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"; then
+              installed=1
+              break
+            fi
+            echo "sdkmanager attempt $attempt failed; retrying in 15s" >&2
+            sleep 15
+          done
+          if [ "$installed" -ne 1 ]; then
+            echo "Could not install the Android SDK packages after 3 attempts." >&2
+            exit 1
+          fi
+          ls -1 "$SDK_ROOT/platforms" "$SDK_ROOT/build-tools"
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
       - name: Build and bundle offline player
         run: |
           bun run build
@@ -31,7 +68,7 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
       - name: Upload NocTune APK
         uses: actions/upload-artifact@v4
         with:
