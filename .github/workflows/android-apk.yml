@@ -59,16 +59,42 @@ jobs:
           ls -1 "$SDK_ROOT/platforms" "$SDK_ROOT/build-tools"
       - name: Install dependencies
         run: bun install
+      - name: Check the build inputs
+        run: |
+          test -x node_modules/.bin/vite || { echo "vite is missing from node_modules" >&2; exit 1; }
+          for f in src/assets/quiet-hours.mp3.asset.json src/assets/weightless.mp3.asset.json src/assets/afterglow.mp3.asset.json; do
+            test -f "$f" || { echo "missing $f" >&2; exit 1; }
+          done
       - name: Build and bundle offline player
         run: |
-          bun run build
-          node scripts/prepare-android.mjs
-          bunx cap sync android
-      - name: Compile installable APK
+          set -uo pipefail
+          log=/tmp/build.log
+          ( bun run build && node scripts/prepare-android.mjs && bunx cap sync android ) >"$log" 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "::error::Build or packaging failed with exit $status. Last lines of output:"
+            tail -n 60 "$log" | sed 's/%/%25/g; s/\r//g; s/[[:space:]]*$//' | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+            exit "$status"
+          fi
+          tail -n 12 "$log"
+       - name: Compile installable APK
         working-directory: android
         run: |
+          set -uo pipefail
+          log=/tmp/gradle.log
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ( ./gradlew assembleDebug --no-daemon --stacktrace ) >"$log" 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "::error::Gradle failed with exit $status. Last lines of output:"
+            tail -n 60 "$log" | sed 's/%/%25/g; s/\r//g; s/[[:space:]]*$//' | while IFS= read -r line; do
+              echo "::error::${line}"
+            done
+            exit "$status"
+          fi
+          tail -n 12 "$log"
       - name: Upload NocTune APK
         uses: actions/upload-artifact@v4
         with:
