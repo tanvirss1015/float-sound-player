@@ -14,6 +14,7 @@
 - Keep all player appearance tokens and responsive layouts in src/styles.css to preserve the reference design across themes.
 - Use Capacitor for the separate Android package; the Lovable web deployment remains TanStack Start and is not itself an APK.
 - Prepare Android static outputs with scripts/prepare-android.mjs before Capacitor sync, and compile with the manual GitHub Actions workflow or local Gradle so sample audio is bundled offline.
+- Run the CI web build with LOVABLE_SANDBOX=1, because only the Lovable build environment emits the static client bundle that Capacitor packages; without it the Android bundling step has no index.html to copy.
 
 - Keep the Web Audio equalizer graph in MusicProvider, created only after a user gesture, so a single media source survives navigation.
 - Preserve existing local storage keys and Android application ID during branding updates so user music and favourites are retained.

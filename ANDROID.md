@@ -1,33 +1,46 @@
 # NocTune for Android
 
-The NocTune player and Capacitor Android project are included. An APK has **not** been compiled or delivered: this sandbox has no installed Android SDK and no generated static web output. Phone-size web checks are not actual Android-device testing.
+NocTune is a Capacitor Android app wrapping the same player as the website. A build of the app is produced automatically by GitHub Actions; it has not been tested on a physical Android device.
 
-## Get an APK without installing Android Studio
+## Download the built app
 
-1. Export/sync this project to your GitHub repository, including the `.github/workflows/android-apk.yml` workflow.
-2. In GitHub, open **Actions → Build NocTune APK → Run workflow**. The workflow also runs on every push to `main`.
-3. When the job succeeds, open the run, scroll to **Artifacts**, and download **NocTune-Android-APK**. Unzip it to get `app-debug.apk`.
-4. Copy `app-debug.apk` to the phone (USB, Google Drive, or a messaging app) and open it there.
-5. Android blocks apps from outside the Play Store: when prompted, tap **Settings → Allow from this source** (or **More details → Install anyway**), then go back and tap **Install**.
-6. After installing, open **NocTune** from the app drawer. The three sample tracks play offline; your own imported audio is saved on the device.
+1. Open **Actions → Build NocTune APK** in your GitHub repository.
+2. Open the most recent run with a green check.
+3. Under **Artifacts**, download **NocTune-Android-APK** and unzip it. The file inside is `app-debug.apk`.
 
-If a later build fails, open the failed run and click the red step to read the error, then fix that step.
+Artifacts are kept for 30 days. The package is debug-signed, which is fine for installing on your own phone; use a privately signed release before distributing it to anyone else.
 
-The workflow installs the Android tools, builds NocTune, bundles its three sample tracks for offline use, and compiles a debug-signed APK. It has not been run from this sandbox; a successful GitHub run is required before an APK exists. For public distribution, use a privately signed release instead of the debug package.
+## Install it on your phone
 
-## Build an installable APK
+1. Copy `app-debug.apk` to the phone (USB, Drive, or any file transfer).
+2. Open the file with the phone's file manager.
+3. When Android warns about installing from an unknown source, allow it for that file manager once.
+4. Tap **Install**, then open NocTune from the app drawer.
 
-On a computer with Android Studio, Android SDK 36 and JDK 21 installed:
+If a previous NocTune build is already installed, uninstall it first — a differently signed build cannot replace it.
 
-1. Export this project's source and install packages with `bun install`.
-2. Run `bun run build`. Static prerendering emits `dist/client/index.html` and the library/favourites pages.
-3. Run `node scripts/prepare-android.mjs` to bundle the sample tracks, then `bunx cap sync android`.
-4. Run `bunx cap open android`.
-5. In Android Studio, choose **Build → Generate App Bundles or APKs → Generate APKs**. The debug APK is at `android/app/build/outputs/apk/debug/app-debug.apk`.
-6. Transfer that APK to your Android phone and permit installation from that source. For distribution, generate a signed release APK and keep your signing key private.
+## How the build works
 
-Imported audio is saved privately on the device with IndexedDB. Artwork, the player interface, and all three 30-second ambient samples are bundled by the APK preparation script. The script needs internet access during packaging; the packaged samples then play offline. The equalizer uses five Web Audio frequency bands with presets and adjustable gain; skip icons use a fixed centered frame for Android WebView alignment.
+The workflow (`.github/workflows/android-apk.yml`) runs on every push to `main` and can also be started by hand from **Actions → Build NocTune APK → Run workflow**. It:
+
+1. Installs JDK 21 and the Android SDK on the runner.
+2. Builds the web app with `LOVABLE_SANDBOX=1`, which is what makes the build emit the static files the Android package needs.
+3. Downloads the three ambient samples and rewrites the app to play them from inside the package, so they work with no connection.
+4. Syncs the web output into the Android project, compiles the debug APK, and uploads it as an artifact.
+
+## Building locally instead
+
+On a computer with Android Studio, Android SDK 36 and JDK 21:
+
+1. `bun install`
+2. `LOVABLE_SANDBOX=1 bun run build`
+3. `node scripts/prepare-android.mjs`, then `bunx cap sync android`
+4. `bunx cap open android`, then **Build → Generate App Bundles or APKs → Generate APKs**
+
+## What is and is not verified
+
+Imported audio is saved privately on the device with IndexedDB. Artwork, the player interface, and all three 30-second ambient samples ship inside the package.
 
 Audio playback, device audio selection, favourites, themes and lock-screen media metadata are implemented in the web player. Native background playback, Android media scanning, Bluetooth/headset behavior, system notification controls and actual-device compatibility remain unverified and may need native Android integrations.
 
-This is a native Android packaging path, not a home-screen shortcut. Publishing the website does not generate an APK.
+This is a native Android package, not a home-screen shortcut. Publishing the website does not produce an APK.
