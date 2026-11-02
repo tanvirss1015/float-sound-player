@@ -7,4 +7,5 @@
 - [x] Align five-second skip icons and strengthen light-mode disk/control shadows; verify phone-size appearance.
 - [x] Implement a working five-band audio equalizer; verify presets, custom gain, bypass, playback, and skip actions.
 - [x] Add automated GitHub APK compilation and offline sample bundling.
-- [ ] Deliver a compiled APK and test on Android — blocked by unavailable static build output/Android SDK here; requires running the included GitHub workflow or Android Studio.
+- [x] Compile an installable APK in GitHub Actions; artifact NocTune-Android-APK is downloadable.
+- [ ] Test NocTune on a physical Android device — the package is built, but not yet run on one.
