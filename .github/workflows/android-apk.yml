@@ -19,8 +19,7 @@ jobs:
           java-version: '21'
       - name: Prepare Android SDK
         run: |
-          SDK="$ANDROID_HOME"
-          MGR="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          MGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           yes | "$MGR" --licenses >/dev/null 2>&1 || true
           "$MGR" --install "platform-tools" "platforms;android-36" "build-tools;36.0.0"
       - name: Install dependencies
@@ -28,7 +27,13 @@ jobs:
       - name: Build web app
         run: bun run build
       - name: Bundle offline audio
-        run: node scripts/prepare-android.mjs
+        run: node scripts/prepare-android.mjs 2>&1 | tee /tmp/b.log; exit ${PIPESTATUS[0]}
+      - name: Report diagnostics
+        if: failure()
+        run: |
+          echo "::error::bundle-log: $(tail -c 300 /tmp/b.log 2>/dev/null | tr '\n' '|')"
+          echo "::error::dist-tree: $(find dist -maxdepth 2 2>/dev/null | tr '\n' '|')"
+          echo "::error::asset-http: $(curl -s -o /dev/null -w '%{http_code}' https://float-sound-player.lovable.app/__l5e/assets-v1/7c425f11-bb83-48dd-b819-aca57fd5c9e6/quiet-hours.mp3)"
       - name: Sync Android project
         run: bunx cap sync android
       - name: Compile installable APK
