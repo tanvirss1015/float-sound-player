@@ -2,7 +2,6 @@ import { ChevronRight, Heart, ListMusic, Pause, Play, Repeat2, RotateCcw, Rotate
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useMusic } from './music-provider';
-import { formatTime } from './player-helpers';
 
 export function formatTime(value: number) { return `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`; }
 export function Vinyl({ artwork, playing = false, small = false }: { artwork: string; playing?: boolean; small?: boolean }) {
