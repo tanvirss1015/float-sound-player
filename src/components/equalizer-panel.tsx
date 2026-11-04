@@ -1,0 +1,9 @@
+import { AudioLines } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useMusic } from './music-provider';
+import { equalizerBands, equalizerPresets } from '@/lib/equalizer';
+
+export function EqualizerPanel() {
+  const m = useMusic();
+  return <section className="equalizer-panel" aria-label="Audio equalizer"><div className="section-heading"><h3>Equalizer</h3><Button variant="float" size="icon" aria-label="Enable equalizer" aria-pressed={m.eqEnabled} className={m.eqEnabled ? 'is-active' : ''} onClick={() => m.toggleEqualizer(!m.eqEnabled)}><AudioLines /></Button></div><select aria-label="Equalizer preset" value={Object.keys(equalizerPresets).find(name => equalizerPresets[name]?.every((gain, i) => gain === m.eqGains[i])) ?? 'Custom'} onChange={e => { const gains = equalizerPresets[e.target.value]; if (gains) { m.setEqGains([...gains]); m.toggleEqualizer(true); } }}><option value="Custom" disabled>Custom</option>{Object.keys(equalizerPresets).map(name => <option key={name}>{name}</option>)}</select><div className="equalizer-bands">{equalizerBands.map((frequency, i) => <label key={frequency}><output>{(m.eqGains[i] ?? 0) > 0 ? '+' : ''}{m.eqGains[i]} dB</output><input type="range" aria-label={`${frequency} Hz gain`} min="-12" max="12" step="1" value={m.eqGains[i] ?? 0} onChange={e => { const gain = Number(e.target.value); m.setEqGains(previous => previous.map((v, index) => index === i ? gain : v)); m.toggleEqualizer(true); }} /><span>{frequency >= 1000 ? `${frequency / 1000}k` : frequency}</span></label>)}</div><div className="playback-settings"><span>Playback speed</span><select aria-label="Choose playback speed" value={m.speed} onChange={e => m.setSpeed(Number(e.target.value))}>{[.75, 1, 1.25, 1.5, 2].map(v => <option key={v} value={v}>{v}×</option>)}</select></div></section>;
+}
