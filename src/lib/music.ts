@@ -26,6 +26,32 @@ function openMusicDB(): Promise<IDBDatabase> {
     request.onerror = () => reject(request.error);
   });
 }
+export function probeDuration(src: string): Promise<number> {
+  return new Promise(resolve => {
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    const done = (value: number) => {
+      audio.onloadedmetadata = null;
+      audio.onerror = null;
+      resolve(Number.isFinite(value) && value > 0 ? Math.round(value) : 0);
+    };
+    audio.onloadedmetadata = () => done(audio.duration);
+    audio.onerror = () => done(0);
+    setTimeout(() => done(audio.duration), 10000);
+    audio.src = src;
+  });
+}
+export async function updateLocalTrackDuration(id: string, duration: number) {
+  const db = await openMusicDB();
+  return new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction('tracks', 'readwrite');
+    const store = transaction.objectStore('tracks');
+    const request = store.get(id);
+    request.onsuccess = () => { if (request.result) store.put({ ...request.result, duration }); };
+    transaction.oncomplete = () => { db.close(); resolve(); };
+    transaction.onerror = () => { db.close(); reject(transaction.error); };
+  });
+}
 export async function saveLocalTrack(track: Track, file: File) {
   const db = await openMusicDB();
   return new Promise<void>((resolve, reject) => {

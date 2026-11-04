@@ -1,5 +1,6 @@
+import { Capacitor } from '@capacitor/core';
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { defaultTrack, initialTracks, loadLocalTracks, saveLocalTrack, type Track } from '@/lib/music';
+import { defaultTrack, initialTracks, loadLocalTracks, saveLocalTrack, probeDuration, updateLocalTrackDuration, type Track } from '@/lib/music';
 import { createEqualizer, equalizerPresets } from '@/lib/equalizer';
 
 function useMusicState() {
@@ -21,16 +22,25 @@ function useMusicState() {
   const audio = useRef<HTMLAudioElement>(null);
   const current = tracks.find(t => t.id === currentId) ?? defaultTrack;
   useEffect(() => {
-    loadLocalTracks().then(saved => setTracks([...initialTracks, ...saved])).catch(() => {});
+    loadLocalTracks().then(async saved => {
+      setTracks([...initialTracks, ...saved]);
+      for (const track of saved.filter(t => !t.duration)) {
+        const seconds = await probeDuration(track.src);
+        if (seconds) {
+          setTracks(previous => previous.map(t => (t.id === track.id ? { ...t, duration: seconds } : t)));
+          try { await updateLocalTrackDuration(track.id, seconds); } catch {}
+        }
+      }
+    }).catch(() => {});
     try { const saved = localStorage.getItem('melo-likes'); if (saved) setLikes(JSON.parse(saved)); setLight(localStorage.getItem('melo-theme') === 'light'); } catch {}
   }, []);
-  useEffect(() => { document.documentElement.dataset['theme'] = light ? 'light' : 'dark'; localStorage.setItem('melo-theme', light ? 'light' : 'dark'); }, [light]);
+  useEffect(() => { document.documentElement.dataset['theme'] = light ? 'light' : 'dark'; localStorage.setItem('melo-theme', light ? 'light' : 'dark'); if (Capacitor.isNativePlatform()) (window as unknown as { Capacitor?: { Plugins?: { SystemBars?: { setStyle(options: { style: string }): Promise<void> } } } }).Capacitor?.Plugins?.SystemBars?.setStyle({ style: light ? 'LIGHT' : 'DARK' }).catch(() => {}); }, [light]);
   useEffect(() => { localStorage.setItem('melo-likes', JSON.stringify(likes)); }, [likes]);
   useEffect(() => { if (audio.current) { audio.current.volume = volume / 100; audio.current.playbackRate = speed; } }, [volume, speed]);
   useEffect(() => { equalizer.current?.update(eqGains, eqEnabled); }, [eqGains, eqEnabled]);
   useEffect(() => {
     if (!audio.current) return;
-    setTime(0); setDuration(current.duration); setError('');
+    setTime(0); setDuration(current.duration || 30); setError('');
     if (playing) audio.current.play().catch(() => { setPlaying(false); setError('Tap play to start your music.'); });
   }, [current.src]);
   useEffect(() => {
@@ -68,16 +78,38 @@ function useMusicState() {
   }
   function seek(value: number) { if (audio.current) audio.current.currentTime = value; setTime(value); }
   function like(id: string) { setLikes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]); }
-  async function importFiles(files: FileList | null) {
+  async function importFiles(files: FileList | File[] | null) {
     if (!files) return;
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('audio/') && !/\.(mp3|wav|ogg|m4a|flac|aac)$/i.test(file.name)) { setError('Please choose an audio file.'); continue; }
-      const track: Track = { id: crypto.randomUUID(), title: file.name.replace(/\.[^.]+$/, ''), artist: 'Your music', album: 'Your uploads', artwork: defaultTrack.artwork, src: URL.createObjectURL(file), duration: 0, imported: true };
+      const src = URL.createObjectURL(file);
+      const seconds = await probeDuration(src);
+      const track: Track = { id: crypto.randomUUID(), title: file.name.replace(/\.[^.]+$/, ''), artist: 'Your music', album: 'Your uploads', artwork: defaultTrack.artwork, src, duration: seconds, imported: true };
       setTracks(prev => [...prev, track]);
       try { await saveLocalTrack(track, file); } catch { setError('Music is available this session, but could not be saved on this device.'); }
     }
   }
-  return { tracks, current, playing, time, duration, volume, likes, light, shuffle, repeat, speed, error, audio, eqEnabled, eqGains, toggleEqualizer, setEqGains, togglePlay, select, next, seek, like, importFiles, setVolume, setLight, setShuffle, setRepeat, setSpeed, setPlaying, setTime, setDuration };
+  async function pickDeviceAudio(): Promise<boolean> {
+    if (!Capacitor.isNativePlatform()) return false;
+    try {
+      const { FilePicker } = await import('@capawesome/capacitor-file-picker');
+      const picked = await FilePicker.pickFiles({ types: ['audio/*'], limit: 0, readData: false });
+      const files: File[] = [];
+      for (const pickedFile of picked.files) {
+        try {
+          const response = await fetch(pickedFile.webPath ?? '');
+          const blob = await response.blob();
+          files.push(new File([blob], pickedFile.name, { type: pickedFile.mimeType || blob.type || 'audio/mpeg' }));
+        } catch { setError('Could not read that audio file.'); }
+      }
+      if (!files.length) return true;
+      await importFiles(files);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return { tracks, current, playing, time, duration, volume, likes, light, shuffle, repeat, speed, error, audio, eqEnabled, eqGains, toggleEqualizer, setEqGains, togglePlay, select, next, seek, like, importFiles, pickDeviceAudio, setVolume, setLight, setShuffle, setRepeat, setSpeed, setPlaying, setTime, setDuration };
 }
 type MusicState = ReturnType<typeof useMusicState>;
 const MusicContext = createContext<MusicState | null>(null);
